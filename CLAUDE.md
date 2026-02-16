@@ -1,4 +1,4 @@
-# Claude Code Reference for helioslabs.io
+# Claude Code Reference for helios.owen-hobbs.com
 
 This file provides Claude Code with essential context for working on the Helios Labs showcase website. Read this before making any changes.
 
@@ -6,7 +6,7 @@ This file provides Claude Code with essential context for working on the Helios 
 
 ## What This Site Is
 
-**helioslabs.io** is a portfolio showcase website for an algorithmic trading system called Helios. It tells the story: "I rigorously tested this system (backtest results) → I'm now trading it live (transparent results)."
+**helios.owen-hobbs.com** is a portfolio showcase website for an algorithmic trading system called Helios. It tells the story: "I rigorously tested this system (backtest results) → I'm now trading it live (transparent results)."
 
 The site exists to impress **four audiences simultaneously**:
 
@@ -149,7 +149,7 @@ nautilus_trader/data/
 ## Project Structure
 
 ```
-helioslabs.io/
+helios.owen-hobbs.com/
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx              # Homepage: hero + workflow + results toggle + tech + agents
