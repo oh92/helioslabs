@@ -15,19 +15,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Helios Labs | Algorithmic Trading System",
+  title: "Helios | Algorithmic Trading System",
   description: "AI-assisted algorithmic trading with rigorous backtesting, optimization, and live execution on dYdX perpetuals.",
   keywords: ["algorithmic trading", "quantitative trading", "AI trading", "dYdX", "crypto trading", "backtesting"],
-  authors: [{ name: "Helios Labs" }],
+  authors: [{ name: "Owen Hobbs" }],
+  metadataBase: new URL("https://helios.owen-hobbs.com"),
   openGraph: {
-    title: "Helios Labs | Algorithmic Trading System",
+    title: "Helios | Algorithmic Trading System",
     description: "AI-assisted algorithmic trading with rigorous backtesting, optimization, and live execution.",
     type: "website",
     locale: "en_US",
+    siteName: "Helios",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Helios Labs | Algorithmic Trading System",
+    title: "Helios | Algorithmic Trading System",
     description: "AI-assisted algorithmic trading with rigorous backtesting, optimization, and live execution.",
   },
 };
