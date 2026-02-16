@@ -1,56 +1,38 @@
+import Link from "next/link";
 import { Github, Linkedin, Mail } from "lucide-react";
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="border-t border-border bg-card/50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
-          {/* Brand and tagline */}
-          <div className="flex flex-col items-center gap-2 md:items-start">
-            <span className="text-sm font-medium text-foreground">
-              Helios Labs
-            </span>
-            <p className="text-xs text-muted-foreground">
-              AI-assisted algorithmic trading systems
-            </p>
-          </div>
-
-          {/* Social links */}
-          <div className="flex items-center gap-4">
-            <a
-              href="https://github.com/oh92"
+    <footer className="border-t border-border">
+      <div className="mx-auto max-w-4xl px-6 py-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <Link
+              href="https://github.com/oh92/helioslabs"
               target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="GitHub"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Github className="size-5" />
-            </a>
-            <a
+              <Github className="h-4 w-4" />
+              GitHub
+            </Link>
+            <Link
               href="https://www.linkedin.com/in/owen-hobbs/"
               target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="LinkedIn"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Linkedin className="size-5" />
-            </a>
-            <a
+              <Linkedin className="h-4 w-4" />
+              LinkedIn
+            </Link>
+            <Link
               href="mailto:hello@owen-hobbs.com"
-              className="text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="Contact email"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Mail className="size-5" />
-            </a>
+              <Mail className="h-4 w-4" />
+              Contact
+            </Link>
           </div>
-        </div>
-
-        {/* Copyright */}
-        <div className="mt-6 border-t border-border pt-6 text-center">
           <p className="text-xs text-muted-foreground">
-            &copy; {currentYear} Helios Labs. All rights reserved.
+            Live & backtest data · Live results delayed 1 hour
           </p>
         </div>
       </div>

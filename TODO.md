@@ -1,6 +1,6 @@
 # Helios Labs Showcase - TODO
 
-Last updated: 2026-02-06
+Last updated: 2026-02-13
 
 ---
 
@@ -26,6 +26,12 @@ Last updated: 2026-02-06
 ---
 
 ## Completed
+
+- [x] **Deployment pipeline**
+  - GitHub repo (github.com/oh92/helioslabs) — public
+  - Vercel deployment with auto-deploy on push
+  - Supabase project with schema, RLS, and env vars configured
+  - Contact links updated (GitHub, LinkedIn, email)
 
 - [x] **Story-driven homepage redesign (v2)**
   - Light theme (white background)
@@ -184,7 +190,25 @@ async def record_trade(self, trade: TradeRecord):
 
 ### Data Migration Scripts
 - [ ] Create script to import trades from `data/live_results/*/trades.csv`
-- [ ] Create script to import optimization results from `data/optimization_results/*/summary.json`
+- [ ] Import live trade data into Supabase (possibly delayed for privacy)
+
+### Optimization & Backtest Data — Curated Approach
+- [ ] **Do NOT bulk-import raw optimization CSVs** (R003 alone is 29MB / 20,736 rows)
+- [ ] Manually curate which optimization rounds to showcase as summary rows in `optimization_runs`
+- [ ] Only expose headline metrics (Sharpe, ROI, DD, trade count) — no raw parameter data
+- [ ] Sanitize any proprietary details (exact thresholds, filter values, position sizes)
+- [ ] Candidate rounds to showcase:
+  - ProScore2 R004: Sharpe 3.13, ROI 106.7%, DD 13.2%, 3,750 combos
+  - ProScore v1 baseline: Sharpe 2.52, ROI 92.4% (for comparison)
+  - ETH optimization (if results worth showing)
+
+---
+
+## Data Cleanup
+
+- [ ] **Remove ProScore v1 trades from Supabase** — Once ProScore2 has enough trades to stand on its own, delete the 4 legacy v1 trades (Feb 2–6) so the dashboard only reflects the current strategy. Regenerate daily snapshots after removal.
+  - v1 trade IDs: `trd_65ced479675a`, `trd_8fdf6d7084b5`, `trd_d697c22e9090`, `trd_f11beacc65e7`
+  - Keep ProScore2 trade: `trd_f7ca5a8cd689` (Feb 12–13)
 
 ---
 

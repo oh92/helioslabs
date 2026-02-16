@@ -46,7 +46,7 @@ const ethPerformance = {
   entry_price: undefined,
   unrealized_pnl: 0,
   unrealized_pnl_pct: 0,
-  session_pnl: 657.98,
+  session_pnl: 0,
   session_pnl_pct: 6.58,
   total_trades: 32,
   win_rate: 62.5,

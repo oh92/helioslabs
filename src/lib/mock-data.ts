@@ -50,8 +50,8 @@ export const mockTrades: Trade[] = [
     direction: 'LONG',
     entry_price: 97250.50,
     exit_price: 98105.25,
-    size: 0.15,
-    pnl: 128.21,
+    size: null,
+    pnl: null,
     pnl_pct: 0.88,
     exit_reason: 'take_profit',
     created_at: daysAgo(6.7),
@@ -64,8 +64,8 @@ export const mockTrades: Trade[] = [
     direction: 'SHORT',
     entry_price: 99450.00,
     exit_price: 99820.50,
-    size: 0.12,
-    pnl: -44.46,
+    size: null,
+    pnl: null,
     pnl_pct: -0.37,
     exit_reason: 'stop_loss',
     created_at: daysAgo(5.75),
@@ -78,8 +78,8 @@ export const mockTrades: Trade[] = [
     direction: 'LONG',
     entry_price: 98750.00,
     exit_price: 100125.75,
-    size: 0.18,
-    pnl: 247.64,
+    size: null,
+    pnl: null,
     pnl_pct: 1.39,
     exit_reason: 'take_profit',
     created_at: daysAgo(5.0),
@@ -92,8 +92,8 @@ export const mockTrades: Trade[] = [
     direction: 'SHORT',
     entry_price: 101250.00,
     exit_price: 99875.50,
-    size: 0.10,
-    pnl: 137.45,
+    size: null,
+    pnl: null,
     pnl_pct: 1.36,
     exit_reason: 'take_profit',
     created_at: daysAgo(3.9),
@@ -106,8 +106,8 @@ export const mockTrades: Trade[] = [
     direction: 'LONG',
     entry_price: 99500.00,
     exit_price: 99125.25,
-    size: 0.14,
-    pnl: -52.47,
+    size: null,
+    pnl: null,
     pnl_pct: -0.38,
     exit_reason: 'stop_loss',
     created_at: daysAgo(2.6),
@@ -120,8 +120,8 @@ export const mockTrades: Trade[] = [
     direction: 'LONG',
     entry_price: 100850.00,
     exit_price: 102975.50,
-    size: 0.16,
-    pnl: 340.08,
+    size: null,
+    pnl: null,
     pnl_pct: 2.11,
     exit_reason: 'take_profit',
     created_at: daysAgo(1.3),
@@ -134,8 +134,8 @@ export const mockTrades: Trade[] = [
     direction: 'SHORT',
     entry_price: 103500.00,
     exit_price: 102750.25,
-    size: 0.11,
-    pnl: 82.47,
+    size: null,
+    pnl: null,
     pnl_pct: 0.72,
     exit_reason: 'take_profit',
     created_at: daysAgo(0.2),
@@ -149,8 +149,8 @@ export const mockTrades: Trade[] = [
     direction: 'LONG',
     entry_price: 3525.50,
     exit_price: 3598.75,
-    size: 2.5,
-    pnl: 183.13,
+    size: null,
+    pnl: null,
     pnl_pct: 2.08,
     exit_reason: 'take_profit',
     created_at: daysAgo(6.3),
@@ -163,8 +163,8 @@ export const mockTrades: Trade[] = [
     direction: 'SHORT',
     entry_price: 3675.00,
     exit_price: 3625.50,
-    size: 3.0,
-    pnl: 148.50,
+    size: null,
+    pnl: null,
     pnl_pct: 1.35,
     exit_reason: 'take_profit',
     created_at: daysAgo(5.35),
@@ -177,8 +177,8 @@ export const mockTrades: Trade[] = [
     direction: 'LONG',
     entry_price: 3590.00,
     exit_price: 3565.25,
-    size: 2.8,
-    pnl: -69.30,
+    size: null,
+    pnl: null,
     pnl_pct: -0.69,
     exit_reason: 'stop_loss',
     created_at: daysAgo(4.05),
@@ -191,8 +191,8 @@ export const mockTrades: Trade[] = [
     direction: 'LONG',
     entry_price: 3545.00,
     exit_price: 3635.75,
-    size: 3.2,
-    pnl: 290.40,
+    size: null,
+    pnl: null,
     pnl_pct: 2.56,
     exit_reason: 'take_profit',
     created_at: daysAgo(2.9),
@@ -205,8 +205,8 @@ export const mockTrades: Trade[] = [
     direction: 'SHORT',
     entry_price: 3710.00,
     exit_price: 3745.50,
-    size: 2.4,
-    pnl: -85.20,
+    size: null,
+    pnl: null,
     pnl_pct: -0.96,
     exit_reason: 'stop_loss',
     created_at: daysAgo(1.85),
@@ -219,8 +219,8 @@ export const mockTrades: Trade[] = [
     direction: 'LONG',
     entry_price: 3685.00,
     exit_price: 3758.25,
-    size: 2.6,
-    pnl: 190.45,
+    size: null,
+    pnl: null,
     pnl_pct: 1.99,
     exit_reason: 'take_profit',
     created_at: daysAgo(0.6),
@@ -232,6 +232,7 @@ export const mockTrades: Trade[] = [
 export const mockEquityData: EquityDataPoint[] = (() => {
   const data: EquityDataPoint[] = [];
   let balance = 10000;
+  let benchmarkBalance = 10000;
   let peak = balance;
 
   // Daily returns with realistic variance
@@ -241,9 +242,19 @@ export const mockEquityData: EquityDataPoint[] = (() => {
     -0.45, 0.72, 0.15, 0.48, -0.25, 0.68, 0.35, -0.12, 0.82, 0.55
   ];
 
+  // BTC buy-and-hold daily returns (nets to roughly -4.5%)
+  const btcDailyReturns = [
+    -0.30, 0.50, -0.80, -0.20, 0.30, -0.60, 0.10, -0.40, -0.10, 0.20,
+    -0.50, 0.30, -0.70, 0.10, -0.30, -0.20, 0.40, -0.60, -0.10, 0.20,
+    -0.40, 0.10, -0.30, -0.50, 0.20, -0.20, -0.30, 0.10, -0.40, -0.10
+  ];
+
   for (let i = 29; i >= 0; i--) {
-    const returnPct = dailyReturns[29 - i];
+    const idx = 29 - i;
+    const returnPct = dailyReturns[idx];
+    const btcReturn = btcDailyReturns[idx];
     balance = balance * (1 + returnPct / 100);
+    benchmarkBalance = benchmarkBalance * (1 + btcReturn / 100);
     peak = Math.max(peak, balance);
     const drawdown = ((peak - balance) / peak) * 100;
 
@@ -251,6 +262,8 @@ export const mockEquityData: EquityDataPoint[] = (() => {
       timestamp: daysAgo(i),
       balance: Math.round(balance * 100) / 100,
       drawdown_pct: Math.round(drawdown * 100) / 100,
+      daily_pnl_pct: returnPct,
+      benchmark_balance: Math.round(benchmarkBalance * 100) / 100,
     });
   }
 
@@ -273,6 +286,12 @@ export const mockOptimizationRuns: OptimizationRun[] = [
     backtest_start: '2024-01-01T00:00:00Z',
     backtest_end: '2024-12-31T23:59:59Z',
     num_candles: 35040,
+    distributions: {
+      sharpe_ratio: { min: 1.52, p10: 1.68, p25: 1.82, p50: 2.01, p75: 2.18, p90: 2.31, max: 2.34, mean: 1.98, count: 847 },
+      pnl_pct: { min: 12.5, p10: 18.3, p25: 25.1, p50: 33.4, p75: 39.8, p90: 43.2, max: 45.8, mean: 31.7, count: 847 },
+      max_drawdown: { min: 5.1, p10: 7.2, p25: 9.4, p50: 12.1, p75: 15.3, p90: 17.8, max: 19.9, mean: 12.4, count: 847 },
+      win_rate: { min: 31.2, p10: 35.8, p25: 39.1, p50: 42.5, p75: 48.2, p90: 53.1, max: 58.7, mean: 43.1, count: 847 },
+    },
   },
   {
     id: 'opt_002',
@@ -311,9 +330,9 @@ export const mockPerformance: MarketPerformance = {
   market: mockMarkets[0],
   current_position: 'LONG',
   entry_price: 102450.00,
-  unrealized_pnl: 185.50,
+  unrealized_pnl: undefined,
   unrealized_pnl_pct: 1.21,
-  session_pnl: 838.92,
+  session_pnl: 0,
   session_pnl_pct: 8.39,
   total_trades: 47,
   win_rate: 59.6,
@@ -321,6 +340,7 @@ export const mockPerformance: MarketPerformance = {
   max_drawdown_pct: 4.25,
   avg_win_pct: 1.52,
   avg_loss_pct: -0.68,
+  benchmark_return_pct: -5.2,
 };
 
 // System health

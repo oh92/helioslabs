@@ -17,7 +17,7 @@ CREATE TABLE trading_sessions (
     market_id TEXT REFERENCES markets(id),
     started_at TIMESTAMP,
     ended_at TIMESTAMP,
-    mode TEXT CHECK (mode IN ('paper', 'live')),
+    mode TEXT CHECK (mode IN ('paper', 'live', 'backtest')),
     starting_balance DECIMAL(20, 8)
 );
 
@@ -34,7 +34,8 @@ CREATE TABLE trades (
     pnl DECIMAL(20, 8),
     pnl_pct DECIMAL(10, 4),
     exit_reason TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    source TEXT DEFAULT 'live'
 );
 
 -- Optimization results (aggregated only)
@@ -51,7 +52,8 @@ CREATE TABLE optimization_runs (
     best_drawdown_pct DECIMAL(10, 4),
     backtest_start DATE,
     backtest_end DATE,
-    num_candles INTEGER
+    num_candles INTEGER,
+    distributions JSONB
 );
 
 -- Daily performance snapshots
@@ -63,7 +65,8 @@ CREATE TABLE daily_snapshots (
     close_balance DECIMAL(20, 8),
     daily_pnl DECIMAL(20, 8),
     daily_pnl_pct DECIMAL(10, 4),
-    num_trades INTEGER
+    num_trades INTEGER,
+    source TEXT DEFAULT 'live'
 );
 
 -- Create indexes for common queries
@@ -71,6 +74,8 @@ CREATE INDEX idx_trades_session ON trades(session_id);
 CREATE INDEX idx_trades_exit_time ON trades(exit_time DESC);
 CREATE INDEX idx_snapshots_date ON daily_snapshots(date DESC);
 CREATE INDEX idx_sessions_market ON trading_sessions(market_id);
+CREATE INDEX idx_trades_source ON trades(source);
+CREATE INDEX idx_snapshots_source ON daily_snapshots(source);
 
 -- Enable Row Level Security (RLS) for all tables
 -- Note: You'll need to create policies based on your authentication requirements

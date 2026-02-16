@@ -13,7 +13,7 @@ export interface TradingSession {
   market_id: string;
   started_at: string;
   ended_at?: string;
-  mode: 'paper' | 'live';
+  mode: 'paper' | 'live' | 'backtest';
   starting_balance: number;
 }
 
@@ -25,11 +25,12 @@ export interface Trade {
   direction: 'LONG' | 'SHORT';
   entry_price: number;
   exit_price: number;
-  size: number;
-  pnl: number;
+  size: number | null;
+  pnl: number | null;
   pnl_pct: number;
   exit_reason: string;
   created_at: string;
+  source?: 'backtest' | 'live';
 }
 
 export interface OptimizationRun {
@@ -46,6 +47,7 @@ export interface OptimizationRun {
   backtest_start: string;
   backtest_end: string;
   num_candles: number;
+  distributions?: OptimizationDistributions;
 }
 
 export interface DailySnapshot {
@@ -74,12 +76,37 @@ export interface MarketPerformance {
   max_drawdown_pct: number;
   avg_win_pct: number;
   avg_loss_pct: number;
+  backtest_start?: string;
+  backtest_end?: string;
+  num_candles?: number;
+  benchmark_return_pct?: number;
 }
 
 export interface EquityDataPoint {
   timestamp: string;
   balance: number;
   drawdown_pct: number;
+  daily_pnl_pct?: number;
+  benchmark_balance?: number;
+}
+
+export interface DistributionStats {
+  min: number;
+  p10: number;
+  p25: number;
+  p50: number;
+  p75: number;
+  p90: number;
+  max: number;
+  mean: number;
+  count: number;
+}
+
+export interface OptimizationDistributions {
+  sharpe_ratio?: DistributionStats;
+  pnl_pct?: DistributionStats;
+  max_drawdown?: DistributionStats;
+  win_rate?: DistributionStats;
 }
 
 export interface TradeDisplay {
@@ -101,25 +128,3 @@ export interface SystemHealth {
   uptime_hours: number;
 }
 
-// Component prop types
-export interface MetricCardProps {
-  label: string;
-  value: string | number;
-  change?: number;
-  prefix?: string;
-  suffix?: string;
-  variant?: 'default' | 'profit' | 'loss';
-}
-
-export interface WorkflowStep {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-}
-
-export interface TechBadge {
-  name: string;
-  icon?: string;
-  url?: string;
-}

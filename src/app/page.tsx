@@ -1,184 +1,171 @@
 'use client';
 
 import Link from "next/link";
-import { Github, Linkedin, Mail, ArrowRight, ExternalLink } from "lucide-react";
-import { mockPerformance, mockEquityData, mockTrades, mockOptimizationRuns } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
+import { ArrowRight, BarChart3, Cpu, User } from "lucide-react";
 import { SparklineChart } from "@/components/charts/SparklineChart";
+import { SectionHeading } from "@/components/display/SectionHeading";
+import { MetricCard } from "@/components/display/MetricCard";
+import { InfoCard } from "@/components/display/InfoCard";
+import { StepIndicator } from "@/components/display/StepIndicator";
+import { ViewToggle } from "@/components/display/ViewToggle";
+import type { MarketPerformance, EquityDataPoint, OptimizationRun } from "@/lib/types";
+
+type ViewMode = 'backtest' | 'live';
 
 export default function Home() {
-  const latestEquity = mockEquityData[mockEquityData.length - 1];
-  const startEquity = mockEquityData[0];
-  const totalReturn = ((latestEquity.balance - startEquity.balance) / startEquity.balance * 100);
-  const totalTrades = mockTrades.length;
-  const winningTrades = mockTrades.filter(t => t.pnl > 0).length;
+  const [view, setView] = useState<ViewMode>('backtest');
+  const [btPerformance, setBtPerformance] = useState<MarketPerformance | null>(null);
+  const [btEquityData, setBtEquityData] = useState<EquityDataPoint[] | null>(null);
+  const [livePerformance, setLivePerformance] = useState<MarketPerformance | null>(null);
+  const [liveEquityData, setLiveEquityData] = useState<EquityDataPoint[] | null>(null);
+  const [optimization, setOptimization] = useState<OptimizationRun[] | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [btPerfRes, btEquityRes, livePerfRes, liveEquityRes, optRes] = await Promise.all([
+          fetch('/api/performance?source=backtest'),
+          fetch('/api/equity?source=backtest'),
+          fetch('/api/performance?source=live'),
+          fetch('/api/equity?source=live'),
+          fetch('/api/optimization'),
+        ]);
+
+        if (btPerfRes.ok) setBtPerformance(await btPerfRes.json());
+        if (btEquityRes.ok) setBtEquityData(await btEquityRes.json());
+        if (livePerfRes.ok) setLivePerformance(await livePerfRes.json());
+        if (liveEquityRes.ok) setLiveEquityData(await liveEquityRes.json());
+        if (optRes.ok) setOptimization(await optRes.json());
+      } catch (e) {
+        console.error('Error fetching data:', e);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const performance = view === 'backtest' ? btPerformance : livePerformance;
+  const equityData = view === 'backtest' ? btEquityData : liveEquityData;
+
+  const totalReturn = performance?.session_pnl_pct
+    ?? (equityData && equityData.length >= 2
+      ? ((equityData[equityData.length - 1].balance - equityData[0].balance) / equityData[0].balance * 100)
+      : null);
+
+  const totalTrades = performance?.total_trades || 0;
+  const winRate = performance?.win_rate || 0;
+  const winningTrades = Math.round(totalTrades * winRate / 100);
 
   // Aggregate optimization stats
-  const totalCombinations = mockOptimizationRuns.reduce((acc, run) => acc + run.total_combinations, 0);
-  const totalPassed = mockOptimizationRuns.reduce((acc, run) => acc + run.passed_constraints, 0);
+  const totalCombinations = optimization
+    ? optimization.reduce((acc, run) => acc + run.total_combinations, 0)
+    : 0;
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="mx-auto max-w-4xl px-6 py-4 flex items-center justify-between">
-          <span className="text-base font-semibold tracking-tight">HELIOS</span>
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Dashboard
-            </Link>
-            <Link href="/system" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              System
-            </Link>
-            <Link
-              href="https://github.com/oh92"
-              target="_blank"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Github className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl px-6">
-        {/* Hero */}
+    <div>
+      <div className="mx-auto max-w-4xl px-6">
+        {/* Hero — Personal + Outcome */}
         <section className="py-16 md:py-20">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
             <span className="h-2 w-2 rounded-full bg-green-600 pulse-dot" />
             <span>Trading live on dYdX v4</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight">
-            Algorithmic Trading System
+            Owen Hobbs
           </h1>
-          <p className="mt-4 text-muted-foreground max-w-2xl leading-relaxed">
-            A complete trading infrastructure built from scratch: strategy development,
-            rigorous backtesting, parameter optimization, live execution, and autonomous
-            AI-powered monitoring.
+          <p className="mt-2 text-muted-foreground">
+            Trading Operations &rarr; Algorithmic Systems
           </p>
+          <p className="mt-4 text-muted-foreground max-w-2xl leading-relaxed">
+            Built a complete algorithmic trading system — strategy design, backtesting,
+            optimization, live execution, and AI-powered monitoring — with Claude as
+            development partner.
+          </p>
+          {btPerformance && (
+            <p className="mt-6 text-4xl font-semibold text-green-600 tracking-tight">
+              +{btPerformance.session_pnl_pct.toFixed(0)}% backtest return
+            </p>
+          )}
         </section>
 
-        {/* What I Built - The Story */}
+        {/* Results — Moved Up (Progressive Disclosure) */}
         <section className="py-12 border-t border-border">
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-10">
-            Development Workflow
-          </h2>
-
-          <div className="space-y-0">
-            {/* Step 1: Strategy Design */}
-            <WorkflowStep
-              number="01"
-              title="Strategy Design"
-              status="complete"
-              description="Defined trading hypothesis: mean-reversion with funding rate confirmation. Entry on Z-score extremes, exit on mean reversion or ATR-based stops."
-              details={[
-                "ProScore strategy: Z-score normalization + momentum filter",
-                "Funding rate confirmation for directional bias",
-                "ATR-based dynamic stop-loss and take-profit",
-                "Position sizing based on account risk percentage"
-              ]}
-            />
-
-            {/* Step 2: Build */}
-            <WorkflowStep
-              number="02"
-              title="Build Strategy"
-              status="complete"
-              description="Implemented matching backtest and live trading code. Both environments generate identical signals from the same parameters."
-              details={[
-                "NautilusTrader integration (Rust/Python framework)",
-                "Parity between backtest and live signal generation",
-                "Position manager with order lifecycle handling",
-                "Trade recorder for CSV export and analysis"
-              ]}
-            />
-
-            {/* Step 3: Optimize */}
-            <WorkflowStep
-              number="03"
-              title="Parameter Optimization"
-              status="complete"
-              description={`Systematic parameter sweeps with constraint filtering. ${totalCombinations.toLocaleString()} combinations tested across multiple markets.`}
-              details={[
-                `${totalCombinations.toLocaleString()} parameter combinations evaluated`,
-                `${totalPassed.toLocaleString()} passed constraint filtering`,
-                "Constraints: min win rate, max drawdown, min trades, Sharpe ratio",
-                "Walk-forward validation on out-of-sample data"
-              ]}
-            />
-
-            {/* Step 4: Deploy */}
-            <WorkflowStep
-              number="04"
-              title="Live Deployment"
-              status="complete"
-              description="Deployed to dYdX v4 perpetual futures. Sub-second order execution with automated risk controls."
-              details={[
-                "dYdX v4 (Cosmos SDK) for decentralized execution",
-                "Binance data feed for price and funding rates",
-                "Paper trading validation before live capital",
-                "Automated position management and order routing"
-              ]}
-            />
-
-            {/* Step 5: Monitor */}
-            <WorkflowStep
-              number="05"
-              title="AI Monitoring"
-              status="active"
-              description="Built autonomous agent framework for continuous system oversight. Multiple specialized agents running 24/7."
-              details={[
-                "supervisor: Meta-agent that orchestrates other agents",
-                "bug_detector: Identifies critical trading bugs",
-                "health_checker: System health and connectivity",
-                "trade_analyst: Performance pattern analysis",
-                "signal_validator: Signal generation verification",
-                "backtest_comparator: Live vs backtest divergence detection"
-              ]}
-              isLast
-            />
+          <div className="flex items-center justify-between mb-2">
+            <SectionHeading>Results</SectionHeading>
+            <ViewToggle view={view} onViewChange={setView} size="sm" />
           </div>
-        </section>
-
-        {/* Live Results */}
-        <section className="py-12 border-t border-border">
-          <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Live Results
-            </h2>
-            <span className="text-xs text-muted-foreground">30-day window</span>
-          </div>
+          <p className="text-xs text-muted-foreground mb-8">
+            {view === 'backtest'
+              ? 'ProScore2 · Jul 2025 – Jan 2026'
+              : 'ProScore2 · Live since Feb 2026'
+            }
+          </p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
             <MetricCard
               label="Return"
-              value={`${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`}
-              positive={totalReturn >= 0}
+              value={totalReturn !== null ? `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(1)}%` : '—'}
+              positive={totalReturn !== null && totalReturn >= 0}
+              negative={totalReturn !== null && totalReturn < 0}
             />
             <MetricCard
               label="Win Rate"
-              value={`${mockPerformance.win_rate.toFixed(1)}%`}
-              subtext={`${winningTrades}/${totalTrades} trades`}
+              subLabel="of trades profitable"
+              value={performance ? `${performance.win_rate.toFixed(1)}%` : '—'}
+              subtext={performance ? `${winningTrades}/${totalTrades} trades` : undefined}
             />
             <MetricCard
               label="Sharpe Ratio"
-              value={mockPerformance.sharpe_ratio?.toFixed(2) || "—"}
+              subLabel="risk-adjusted return"
+              value={performance?.sharpe_ratio?.toFixed(2) || '—'}
+              positive={(performance?.sharpe_ratio || 0) > 1}
             />
             <MetricCard
               label="Max Drawdown"
-              value={`-${mockPerformance.max_drawdown_pct.toFixed(1)}%`}
-              negative
+              subLabel="worst peak-to-trough drop"
+              value={performance ? `-${performance.max_drawdown_pct.toFixed(1)}%` : '—'}
+              negative={!!performance}
             />
           </div>
 
+          {/* Benchmark comparison */}
+          {performance?.benchmark_return_pct != null && totalReturn !== null && (
+            <p className="text-xs text-muted-foreground mb-4">
+              <span className={totalReturn >= 0 ? 'text-green-600' : 'text-red-600'}>
+                Strategy: {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(1)}%
+              </span>
+              {'  vs  '}
+              <span className={performance.benchmark_return_pct >= 0 ? 'text-green-600/70' : 'text-muted-foreground'}>
+                BTC buy-and-hold: {performance.benchmark_return_pct >= 0 ? '+' : ''}{performance.benchmark_return_pct.toFixed(1)}%
+              </span>
+            </p>
+          )}
+
+          {/* Live context note */}
+          {view === 'live' && totalTrades > 0 && totalTrades < 30 && (
+            <p className="text-xs text-muted-foreground/70 italic mb-4">
+              Early-stage track record — statistical significance requires 30+ trades.
+            </p>
+          )}
+
           {/* Sparkline */}
           <div className="h-24 border border-border rounded bg-card/50 p-2">
-            <SparklineChart data={mockEquityData} />
+            {equityData ? (
+              <SparklineChart data={equityData} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground text-xs">Loading...</div>
+            )}
           </div>
 
           <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-            <span>BTC-USD, ETH-USD perpetuals | 15min timeframe</span>
+            <span>
+              {view === 'backtest'
+                ? 'BTC-USD 15m | 7-month backtest'
+                : 'BTC-USD perpetuals | 15m timeframe'
+              }
+            </span>
             <Link
-              href="/dashboard"
+              href={`/dashboard?view=${view}`}
               className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
             >
               Full dashboard <ArrowRight className="h-3 w-3" />
@@ -186,305 +173,147 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Technology Stack */}
+        {/* How It Works — Condensed Workflow */}
         <section className="py-12 border-t border-border">
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-8">
-            Technology Stack
-          </h2>
+          <SectionHeading className="mb-10">How It Works</SectionHeading>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <TechItem
-              name="NautilusTrader"
+          <div className="space-y-0">
+            <StepIndicator
+              variant="timeline"
+              number="01"
+              title="Strategy Design"
+              status="complete"
+              description="Defined trading hypothesis: mean-reversion with funding rate confirmation on BTC-USD perpetuals."
+            />
+            <StepIndicator
+              variant="timeline"
+              number="02"
+              title="Build Strategy"
+              status="complete"
+              description="Implemented matching backtest and live trading code — both generate identical signals from the same parameters."
+            />
+            <StepIndicator
+              variant="timeline"
+              number="03"
+              title="Parameter Optimization"
+              status="complete"
+              description={`Systematic parameter sweeps with constraint filtering. ${totalCombinations.toLocaleString()} combinations tested.`}
+            />
+            <StepIndicator
+              variant="timeline"
+              number="04"
+              title="Live Deployment"
+              status="complete"
+              description="Deployed to dYdX v4 perpetual futures with automated risk controls and sub-second execution."
+            />
+            <StepIndicator
+              variant="timeline"
+              number="05"
+              title="AI Monitoring"
+              status="active"
+              description="6 Claude-powered agents monitor the system 24/7 — detecting bugs, validating signals, and analyzing performance."
+              isLast
+            />
+          </div>
+        </section>
+
+        {/* Under the Hood — Merged Tech + AI */}
+        <section className="py-12 border-t border-border">
+          <SectionHeading className="mb-8">Under the Hood</SectionHeading>
+
+          <div className="grid gap-4 md:grid-cols-2 mb-8">
+            <InfoCard
+              variant="compact"
+              title="NautilusTrader"
               description="High-performance trading framework (Rust/Python). Event-driven architecture with tick-level backtesting precision."
+              titleClassName="font-semibold"
+              className="p-4"
             />
-            <TechItem
-              name="dYdX v4"
+            <InfoCard
+              variant="compact"
+              title="dYdX v4"
               description="Decentralized perpetual futures on Cosmos SDK. On-chain order book with sub-second block finality."
+              titleClassName="font-semibold"
+              className="p-4"
             />
-            <TechItem
-              name="Claude AI"
-              description="Anthropic's language model powering the autonomous agent framework. Continuous monitoring and analysis."
+            <InfoCard
+              variant="compact"
+              title="Claude AI"
+              description="Anthropic's language model powering development partnership, code generation, and the autonomous agent framework."
+              titleClassName="font-semibold"
+              className="p-4"
             />
-            <TechItem
-              name="Python"
+            <InfoCard
+              variant="compact"
+              title="Python"
               description="Core trading logic with async processing, NumPy/Pandas analytics, and type-safe validation via Pydantic."
+              titleClassName="font-semibold"
+              className="p-4"
             />
           </div>
-        </section>
 
-        {/* Agent Framework */}
-        <section className="py-12 border-t border-border">
-          <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              AI Agent Framework
-            </h2>
-            <span className="text-xs text-muted-foreground">Powered by Claude</span>
-          </div>
-
-          <div className="bg-card border border-border rounded p-4 mb-6">
-            <div className="text-xs text-muted-foreground mb-2">$ python -m helios.cli.agents monitor --interval 15</div>
-            <div className="space-y-1 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-green-600">[OK]</span>
-                <span>bug_detector: No critical issues</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-600">[OK]</span>
-                <span>health_checker: All systems operational</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-600">[OK]</span>
-                <span>signal_validator: Signals verified</span>
-              </div>
+          <div className="border border-border rounded p-4 bg-card/30 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">AI Agent Framework</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                6 specialized agents monitor the live system 24/7 — bug detection, health checks, signal validation, and more.
+              </p>
             </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <AgentCard
-              name="bug_detector"
-              description="Order fill mismatches, position desync, signal execution gaps"
-            />
-            <AgentCard
-              name="health_checker"
-              description="API connectivity, memory usage, process heartbeats"
-            />
-            <AgentCard
-              name="trade_analyst"
-              description="Win/loss patterns, exit timing, parameter suggestions"
-            />
-            <AgentCard
-              name="signal_validator"
-              description="Z-score thresholds, momentum verification, missed opportunities"
-            />
-            <AgentCard
-              name="backtest_comparator"
-              description="Trade-by-trade matching, divergence detection, root cause analysis"
-            />
-            <AgentCard
-              name="supervisor"
-              description="Meta-orchestration, dynamic agent dispatch, feedback generation"
-            />
-          </div>
-
-          <div className="mt-6 text-xs text-muted-foreground">
-            <span className="text-foreground">Continuous monitoring:</span> Agents run every 15 minutes,
-            maintain memory across cycles, track persistent issues, and escalate new critical findings.
-          </div>
-        </section>
-
-        {/* Code Architecture */}
-        <section className="py-12 border-t border-border">
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-8">
-            Code Architecture
-          </h2>
-
-          <div className="bg-card border border-border rounded p-4 text-sm overflow-x-auto">
-            <pre className="text-muted-foreground">{`helios/
-├── strategies/        # ProScore strategy (backtest + live)
-│   ├── proscore_strategy.py
-│   ├── proscore_backtest.py
-│   ├── position_manager.py
-│   └── trade_recorder.py
-├── optimizer/         # Parameter sweep engine
-│   ├── optimizer.py
-│   └── config.py
-├── agents/            # AI monitoring framework
-│   ├── supervisor.py
-│   ├── monitoring/    # bug_detector, health_checker, trade_analyst
-│   ├── research/      # backtest_comparator
-│   └── tools/         # LLM, log_parser, exchange
-├── config/
-│   ├── production/    # Live trading configs (.json)
-│   └── optimization/  # Parameter sweep configs (.yaml)
-└── scripts/
-    ├── backtest/      # run_backtest.py, optimize.py
-    └── trading/       # run_trading.py`}</pre>
+            <Link
+              href="/system"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-4"
+            >
+              Learn more <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
         </section>
 
         {/* What's Next */}
         <section className="py-12 border-t border-border">
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-6">
-            Roadmap
-          </h2>
+          <SectionHeading className="mb-8">What&apos;s Next</SectionHeading>
 
-          <div className="space-y-3">
-            <RoadmapItem status="planned" text="strategy_advisor agent: AI-driven parameter tuning suggestions" />
-            <RoadmapItem status="planned" text="market_regime_detector: Adaptive strategy switching based on volatility" />
-            <RoadmapItem status="planned" text="portfolio_optimizer: Multi-strategy allocation and rebalancing" />
-            <RoadmapItem status="planned" text="Additional exchanges: Hyperliquid, GMX, Vertex" />
+          <ul className="space-y-3 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <span className="text-foreground mt-0.5">-</span>
+              <span>Deeper backtesting rigor — expanding in-sample/out-of-sample validation to stress-test strategies across unseen market conditions.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-foreground mt-0.5">-</span>
+              <span>New strategy classes — Order Book Imbalance and orderflow analysis, adding microstructure-based edges alongside mean-reversion.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-foreground mt-0.5">-</span>
+              <span>ML integration — machine learning for regime detection and pattern recognition, letting the system adapt to changing market conditions.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-foreground mt-0.5">-</span>
+              <span>Autonomous strategy pipeline — I provide the strategy design, AI agents handle the build, backtesting, optimization, and reporting end-to-end.</span>
+            </li>
+          </ul>
+        </section>
+
+        {/* Navigation CTAs */}
+        <section className="py-12 border-t border-border">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Link href="/dashboard" className="group border border-border rounded p-6 hover:border-foreground/20 transition-colors">
+              <BarChart3 className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors mb-3" />
+              <h3 className="font-semibold mb-1">Dashboard</h3>
+              <p className="text-xs text-muted-foreground">Equity curves, trade history, and optimization results.</p>
+            </Link>
+            <Link href="/system" className="group border border-border rounded p-6 hover:border-foreground/20 transition-colors">
+              <Cpu className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors mb-3" />
+              <h3 className="font-semibold mb-1">System</h3>
+              <p className="text-xs text-muted-foreground">Architecture, code structure, and the AI agent framework.</p>
+            </Link>
+            <Link href="/about" className="group border border-border rounded p-6 hover:border-foreground/20 transition-colors">
+              <User className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors mb-3" />
+              <h3 className="font-semibold mb-1">About</h3>
+              <p className="text-xs text-muted-foreground">Owen&apos;s background, the Claude partnership, and contact.</p>
+            </Link>
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="py-12 border-t border-border">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center gap-6">
-              <Link
-                href="https://github.com/oh92"
-                target="_blank"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Github className="h-4 w-4" />
-                GitHub
-              </Link>
-              <Link
-                href="https://www.linkedin.com/in/owen-hobbs/"
-                target="_blank"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Linkedin className="h-4 w-4" />
-                LinkedIn
-              </Link>
-              <Link
-                href="mailto:hello@owen-hobbs.com"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Mail className="h-4 w-4" />
-                Contact
-              </Link>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Demo mode | Performance data simulated
-            </p>
-          </div>
-        </footer>
-      </main>
-    </div>
-  );
-}
-
-function WorkflowStep({
-  number,
-  title,
-  status,
-  description,
-  details,
-  isLast = false,
-}: {
-  number: string;
-  title: string;
-  status: 'complete' | 'active' | 'planned';
-  description: string;
-  details: string[];
-  isLast?: boolean;
-}) {
-  return (
-    <div className="relative flex gap-6 pb-8">
-      {/* Vertical line */}
-      {!isLast && (
-        <div className="absolute left-[11px] top-8 bottom-0 w-px bg-border" />
-      )}
-
-      {/* Status indicator */}
-      <div className="relative z-10 flex-shrink-0">
-        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center text-xs
-          ${status === 'complete' ? 'border-foreground bg-foreground text-background' : ''}
-          ${status === 'active' ? 'border-green-600 bg-green-600 text-white' : ''}
-          ${status === 'planned' ? 'border-border bg-background text-muted-foreground' : ''}
-        `}>
-          {status === 'complete' && '✓'}
-          {status === 'active' && <span className="h-2 w-2 rounded-full bg-white pulse-dot" />}
-          {status === 'planned' && number}
-        </div>
       </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-3 mb-2">
-          <span className="text-xs text-muted-foreground">{number}</span>
-          <h3 className="font-semibold">{title}</h3>
-          {status === 'active' && (
-            <span className="text-xs text-green-600">Active</span>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground mb-3">{description}</p>
-        <ul className="space-y-1">
-          {details.map((detail, i) => (
-            <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
-              <span className="text-border mt-0.5">—</span>
-              {detail}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  subtext,
-  positive,
-  negative
-}: {
-  label: string;
-  value: string;
-  subtext?: string;
-  positive?: boolean;
-  negative?: boolean;
-}) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground mb-1">{label}</p>
-      <p className={`text-2xl font-semibold ${
-        negative ? 'text-red-600' : positive ? 'text-green-600' : 'text-foreground'
-      }`}>
-        {value}
-      </p>
-      {subtext && <p className="text-xs text-muted-foreground mt-1">{subtext}</p>}
-    </div>
-  );
-}
-
-function TechItem({
-  name,
-  description,
-}: {
-  name: string;
-  description: string;
-}) {
-  return (
-    <div className="border border-border rounded p-4">
-      <h3 className="font-semibold mb-1">{name}</h3>
-      <p className="text-xs text-muted-foreground">{description}</p>
-    </div>
-  );
-}
-
-function AgentCard({
-  name,
-  description,
-}: {
-  name: string;
-  description: string;
-}) {
-  return (
-    <div className="border border-border rounded p-3">
-      <h3 className="text-sm text-green-600 mb-1">{name}</h3>
-      <p className="text-xs text-muted-foreground">{description}</p>
-    </div>
-  );
-}
-
-function RoadmapItem({
-  status,
-  text,
-}: {
-  status: 'planned' | 'in-progress' | 'complete';
-  text: string;
-}) {
-  return (
-    <div className="flex items-start gap-3 text-sm">
-      <span className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center text-xs
-        ${status === 'complete' ? 'border-foreground bg-foreground text-background' : 'border-border'}
-      `}>
-        {status === 'complete' && '✓'}
-      </span>
-      <span className={status === 'complete' ? 'text-muted-foreground line-through' : ''}>
-        {text}
-      </span>
     </div>
   );
 }
