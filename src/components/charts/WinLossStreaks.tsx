@@ -12,17 +12,12 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { Trade } from "@/lib/types";
+import { useChartStyles } from "@/lib/chart-colors";
 
 interface WinLossStreaksProps {
   trades: Trade[];
   height?: number;
 }
-
-const tickStyle = {
-  fill: "#737373",
-  fontSize: 11,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-};
 
 interface StreakEntry {
   index: number;
@@ -47,6 +42,8 @@ function StreakTooltip({ active, payload }: { active?: boolean; payload?: Toolti
 }
 
 export function WinLossStreaks({ trades, height = 220 }: WinLossStreaksProps) {
+  const { tickStyle, axisLineStyle, cursorFill, gridStroke, profitColor, lossColor } = useChartStyles();
+
   const streaks = useMemo(() => {
     const sorted = [...trades].sort(
       (a, b) => new Date(a.exit_time).getTime() - new Date(b.exit_time).getTime()
@@ -88,17 +85,17 @@ export function WinLossStreaks({ trades, height = 220 }: WinLossStreaksProps) {
         <BarChart data={streaks} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
           <XAxis dataKey="index" hide />
           <YAxis
-            axisLine={{ stroke: "#e5e5e5" }}
-            tickLine={{ stroke: "#e5e5e5" }}
+            axisLine={axisLineStyle}
+            tickLine={axisLineStyle}
             tick={tickStyle}
             allowDecimals={false}
             width={30}
           />
-          <ReferenceLine y={0} stroke="#e5e5e5" />
-          <Tooltip content={<StreakTooltip />} cursor={{ fill: "rgba(115,115,115,0.1)" }} />
+          <ReferenceLine y={0} stroke={gridStroke} />
+          <Tooltip content={<StreakTooltip />} cursor={{ fill: cursorFill }} />
           <Bar dataKey="length" radius={[2, 2, 0, 0]}>
             {streaks.map((entry, i) => (
-              <Cell key={i} fill={entry.type === "win" ? "#16a34a" : "#dc2626"} />
+              <Cell key={i} fill={entry.type === "win" ? profitColor : lossColor} />
             ))}
           </Bar>
         </BarChart>

@@ -8,6 +8,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { EquityDataPoint } from '@/lib/types';
+import { useChartColors } from '@/lib/chart-colors';
 
 interface SparklineChartProps {
   data: EquityDataPoint[];
@@ -20,6 +21,8 @@ export function SparklineChart({
   height = 96,
   className,
 }: SparklineChartProps) {
+  const colors = useChartColors();
+
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
     return data.map((point) => ({
@@ -51,8 +54,8 @@ export function SparklineChart({
         >
           <defs>
             <linearGradient id="sparklineGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#16a34a" stopOpacity={0.2} />
-              <stop offset="100%" stopColor="#16a34a" stopOpacity={0} />
+              <stop offset="0%" stopColor={colors.profit} stopOpacity={0.2} />
+              <stop offset="100%" stopColor={colors.profit} stopOpacity={0} />
             </linearGradient>
           </defs>
           <YAxis
@@ -62,7 +65,7 @@ export function SparklineChart({
           <Area
             type="monotone"
             dataKey="balance"
-            stroke="#16a34a"
+            stroke={colors.profit}
             strokeWidth={1.5}
             fill="url(#sparklineGradient)"
             dot={false}

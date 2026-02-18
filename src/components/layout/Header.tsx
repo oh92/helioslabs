@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Github, Menu, X } from "lucide-react";
+import { ThemeToggle } from "@/components/display/ThemeToggle";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -44,6 +45,7 @@ export function Header() {
           >
             <Github className="h-4 w-4" />
           </Link>
+          <ThemeToggle />
         </div>
 
         {/* Mobile Menu Button */}
@@ -83,6 +85,7 @@ export function Header() {
               <Github className="h-4 w-4" />
               GitHub
             </Link>
+            <ThemeToggle />
           </nav>
         </div>
       )}
