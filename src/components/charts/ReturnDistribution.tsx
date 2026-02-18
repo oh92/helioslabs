@@ -11,17 +11,12 @@ import {
   Tooltip,
 } from "recharts";
 import type { Trade } from "@/lib/types";
+import { useChartStyles } from "@/lib/chart-colors";
 
 interface ReturnDistributionProps {
   trades: Trade[];
   height?: number;
 }
-
-const tickStyle = {
-  fill: "#737373",
-  fontSize: 11,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-};
 
 interface BinEntry {
   label: string;
@@ -45,6 +40,8 @@ function BinTooltip({ active, payload }: { active?: boolean; payload?: TooltipPa
 }
 
 export function ReturnDistribution({ trades, height = 220 }: ReturnDistributionProps) {
+  const { tickStyle, axisLineStyle, cursorFill, profitColor, lossColor } = useChartStyles();
+
   const bins = useMemo(() => {
     const returns = trades.map((t) => t.pnl_pct);
     if (returns.length < 3) return [];
@@ -80,8 +77,8 @@ export function ReturnDistribution({ trades, height = 220 }: ReturnDistributionP
         <BarChart data={bins} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
           <XAxis
             dataKey="label"
-            axisLine={{ stroke: "#e5e5e5" }}
-            tickLine={{ stroke: "#e5e5e5" }}
+            axisLine={axisLineStyle}
+            tickLine={axisLineStyle}
             tick={tickStyle}
             interval={0}
             angle={-30}
@@ -89,16 +86,16 @@ export function ReturnDistribution({ trades, height = 220 }: ReturnDistributionP
             height={50}
           />
           <YAxis
-            axisLine={{ stroke: "#e5e5e5" }}
-            tickLine={{ stroke: "#e5e5e5" }}
+            axisLine={axisLineStyle}
+            tickLine={axisLineStyle}
             tick={tickStyle}
             allowDecimals={false}
             width={30}
           />
-          <Tooltip content={<BinTooltip />} cursor={{ fill: "rgba(115,115,115,0.1)" }} />
+          <Tooltip content={<BinTooltip />} cursor={{ fill: cursorFill }} />
           <Bar dataKey="count" radius={[2, 2, 0, 0]}>
             {bins.map((entry, i) => (
-              <Cell key={i} fill={entry.midpoint >= 0 ? "#16a34a" : "#dc2626"} />
+              <Cell key={i} fill={entry.midpoint >= 0 ? profitColor : lossColor} />
             ))}
           </Bar>
         </BarChart>

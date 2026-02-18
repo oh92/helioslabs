@@ -14,6 +14,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { EquityDataPoint } from "@/lib/types";
+import { useChartStyles } from "@/lib/chart-colors";
 
 interface EquityCurveProps {
   data: EquityDataPoint[];
@@ -47,15 +48,6 @@ function formatCurrency(value: number): string {
 function formatPercent(value: number): string {
   return `${value.toFixed(2)}%`;
 }
-
-// Shared axis tick style
-const tickStyle = {
-  fill: "#737373",
-  fontSize: 11,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-};
-
-const axisLineStyle = { stroke: "#e5e5e5" };
 
 // Custom tooltip for equity panel
 interface ChartDataPoint extends EquityDataPoint {
@@ -96,7 +88,7 @@ function EquityTooltip({ active, payload }: CustomTooltipProps) {
       {hasBenchmark && dataPoint.benchmark_balance != null && (
         <p className="text-sm mt-0.5">
           <span className="text-muted-foreground">Buy-and-hold: </span>
-          <span className="font-medium" style={{ color: '#737373' }}>
+          <span className="text-muted-foreground font-medium">
             ${dataPoint.benchmark_balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </span>
         </p>
@@ -135,6 +127,8 @@ export function EquityCurve({
   showBenchmark = false,
   className,
 }: EquityCurveProps) {
+  const { tickStyle, axisLineStyle, cursorStyle, gridStroke, profitColor, lossColor, dotBorder, mutedColor } = useChartStyles();
+
   // Transform data for the chart
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -188,12 +182,6 @@ export function EquityCurve({
   const equityHeight = showDrawdown ? Math.round(height * 0.75) : height;
   const drawdownHeight = Math.round(height * 0.25);
 
-  const cursorStyle = {
-    stroke: "#737373",
-    strokeWidth: 1,
-    strokeDasharray: "4 4",
-  };
-
   return (
     <div className={className} style={{ height }}>
       {/* Top panel: Equity line + optional benchmark */}
@@ -207,7 +195,7 @@ export function EquityCurve({
             {showGrid && (
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#e5e5e5"
+                stroke={gridStroke}
                 strokeOpacity={0.8}
                 vertical={false}
               />
@@ -234,14 +222,14 @@ export function EquityCurve({
               <Line
                 type="monotone"
                 dataKey="benchmark_balance"
-                stroke="#737373"
+                stroke={mutedColor}
                 strokeWidth={1.5}
                 strokeDasharray="6 3"
                 dot={false}
                 activeDot={{
                   r: 3,
-                  fill: "#737373",
-                  stroke: "#ffffff",
+                  fill: mutedColor,
+                  stroke: dotBorder,
                   strokeWidth: 2,
                 }}
               />
@@ -250,13 +238,13 @@ export function EquityCurve({
             <Line
               type="monotone"
               dataKey="balance"
-              stroke="#16a34a"
+              stroke={profitColor}
               strokeWidth={2}
               dot={false}
               activeDot={{
                 r: 4,
-                fill: "#16a34a",
-                stroke: "#ffffff",
+                fill: profitColor,
+                stroke: dotBorder,
                 strokeWidth: 2,
               }}
             />
@@ -275,8 +263,8 @@ export function EquityCurve({
             >
               <defs>
                 <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#dc2626" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#dc2626" stopOpacity={0.05} />
+                  <stop offset="0%" stopColor={lossColor} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={lossColor} stopOpacity={0.05} />
                 </linearGradient>
               </defs>
 
@@ -300,7 +288,7 @@ export function EquityCurve({
                 width={60}
               />
 
-              <ReferenceLine y={0} stroke="#e5e5e5" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke={gridStroke} strokeDasharray="3 3" />
 
               <Tooltip
                 content={<DrawdownTooltip />}
@@ -310,7 +298,7 @@ export function EquityCurve({
               <Area
                 type="monotone"
                 dataKey="displayDrawdown"
-                stroke="#dc2626"
+                stroke={lossColor}
                 fill="url(#drawdownGradient)"
                 strokeWidth={1}
                 strokeOpacity={0.6}
