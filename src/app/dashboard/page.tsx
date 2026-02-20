@@ -14,9 +14,8 @@ import { MetricCard } from '@/components/display/MetricCard';
 import { ViewToggle } from '@/components/display/ViewToggle';
 import { SystemStatus } from '@/components/display/SystemStatus';
 import { MarketCard } from '@/components/display/MarketCard';
-import { mockSystemHealth } from '@/lib/mock-data';
 import { formatPrice, formatPnlPct, formatTradeTime, formatExitReason, formatBalance } from '@/lib/format';
-import type { Trade, EquityDataPoint, MarketPerformance, OptimizationRun, OptimizationDistributions } from '@/lib/types';
+import type { Trade, EquityDataPoint, MarketPerformance, OptimizationRun, OptimizationDistributions, SystemHealth } from '@/lib/types';
 
 type ViewMode = 'backtest' | 'live';
 
@@ -39,6 +38,7 @@ function DashboardContent() {
   const [equityData, setEquityData] = useState<EquityDataPoint[] | null>(null);
   const [performance, setPerformance] = useState<MarketPerformance | null>(null);
   const [optimization, setOptimization] = useState<OptimizationRun[] | null>(null);
+  const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBenchmark, setShowBenchmark] = useState(true);
 
@@ -50,6 +50,7 @@ function DashboardContent() {
         fetch(`/api/equity?source=${source}`),
         fetch(`/api/performance?source=${source}`),
         fetch(`/api/trades?limit=500&source=${source}`),
+        fetch('/api/health'),
       ];
 
       if (source === 'backtest') {
@@ -62,7 +63,8 @@ function DashboardContent() {
       if (results[1].ok) setEquityData(await results[1].json());
       if (results[2].ok) setPerformance(await results[2].json());
       if (results[3].ok) setAllTrades(await results[3].json());
-      if (source === 'backtest' && results[4]?.ok) setOptimization(await results[4].json());
+      if (results[4].ok) setHealth(await results[4].json());
+      if (source === 'backtest' && results[5]?.ok) setOptimization(await results[5].json());
     } catch (e) {
       console.error('Error fetching dashboard data:', e);
     }
@@ -105,7 +107,7 @@ function DashboardContent() {
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               <p className="mt-2 text-muted-foreground">Trading performance and analytics</p>
             </div>
-            <SystemStatus health={mockSystemHealth} />
+            {health && <SystemStatus health={health} />}
           </div>
 
           {/* Tab Toggle */}
