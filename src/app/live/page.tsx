@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -23,8 +23,8 @@ import {
   mockTrades,
   mockEquityData,
   mockPerformance,
-  mockSystemHealth,
 } from '@/lib/mock-data';
+import type { SystemHealth } from '@/lib/types';
 import {
   Activity,
   TrendingUp,
@@ -81,6 +81,15 @@ function formatExitReason(reason: string): string {
 }
 
 export default function LivePerformancePage() {
+  const [health, setHealth] = useState<SystemHealth | null>(null);
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setHealth(data); })
+      .catch(() => {});
+  }, []);
+
   // Get recent trades (last 10)
   const recentTrades = useMemo(() => {
     return [...mockTrades]
@@ -115,7 +124,7 @@ export default function LivePerformancePage() {
             Real-time trading system performance and analytics
           </p>
         </div>
-        <SystemHealthIndicator health={mockSystemHealth} />
+        {health && <SystemHealthIndicator health={health} />}
       </div>
 
       {/* Market Cards Grid */}
