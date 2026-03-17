@@ -20,7 +20,7 @@ export default function AboutPage() {
             />
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Owen Hobbs</h1>
-              <p className="text-muted-foreground mt-1">Former Head of Trading &amp; Product Platforms · CoinAlpha (Hummingbot)</p>
+              <p className="text-muted-foreground mt-1">Former Head of Trading &amp; Product Platforms · CoinAlpha</p>
               <p className="text-sm text-muted-foreground mt-1">United States · Hong Kong · Singapore</p>
             </div>
           </div>
@@ -30,9 +30,9 @@ export default function AboutPage() {
             <div className="border border-border rounded-lg p-5 bg-card/30">
               <h3 className="font-semibold mb-2">The Background</h3>
               <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Led trading operations at CoinAlpha (Hummingbot), the most widely used open-source
-                market making framework. Managed teams, execution infrastructure, and operational
-                tooling across international markets.
+                Scaled CoinAlpha&apos;s market making business from zero to 100+ concurrent markets
+                across three regions. Owned the execution infrastructure, operational tooling,
+                and platforms the trading team ran on.
               </p>
               <div className="pt-3 border-t border-border text-xs text-muted-foreground font-mono">
                 100+ markets · 99%+ uptime · 3 regions

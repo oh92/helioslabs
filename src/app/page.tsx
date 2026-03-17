@@ -69,7 +69,7 @@ export default function Home() {
             Trading Systems &middot; AI Architecture &middot; Scalable Design
           </p>
           <p className="mt-1 text-xs text-muted-foreground/60">
-            Ex-Head of Trading &amp; Product Platforms &middot; CoinAlpha (Hummingbot)
+            Ex-Head of Trading &amp; Product Platforms &middot; CoinAlpha
           </p>
           <p className="mt-3 text-muted-foreground max-w-xl">
             I built a three-layer AI agent platform that manages live algorithmic
@@ -286,7 +286,7 @@ export default function Home() {
             <Link href="/about" className="group border border-border rounded p-6 hover:border-foreground/20 transition-colors">
               <User className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors mb-3" />
               <h3 className="font-semibold mb-1">About</h3>
-              <p className="text-xs text-muted-foreground">CoinAlpha background, the Claude partnership, and what&apos;s next.</p>
+              <p className="text-xs text-muted-foreground">CoinAlpha, scaling from zero to 100+ markets, and the Claude partnership.</p>
             </Link>
           </div>
         </section>
