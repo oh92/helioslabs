@@ -15,7 +15,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/architecture',
-        destination: '/system',
+        destination: '/agents',
+        permanent: true,
+      },
+      {
+        source: '/system',
+        destination: '/agents',
         permanent: true,
       },
     ];

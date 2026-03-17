@@ -72,7 +72,7 @@ function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    fetchData(view);
+    fetchData(view).catch(() => {});
   }, [view, fetchData]);
 
   const switchView = (newView: ViewMode) => {
@@ -105,7 +105,7 @@ function DashboardContent() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-              <p className="mt-2 text-muted-foreground">Trading performance and analytics</p>
+              <p className="mt-2 text-muted-foreground">ProScore2 strategy performance — backtest results and live trading</p>
             </div>
             {health && <SystemStatus health={health} />}
           </div>
@@ -127,7 +127,7 @@ function DashboardContent() {
             {/* Backtest Context Banner */}
             {view === 'backtest' && performance && (
               <div className="mb-8 px-4 py-3 border border-border rounded-lg bg-card/30 text-sm text-muted-foreground">
-                ProScore2 | BTC-USD 15m | Jul 2025 – Jan 2026 | 20,240 candles
+                ProScore2 | BTC-USD 15m | Mar 2024 – Mar 2026 | 70,176 candles | IS/OOS validated
               </div>
             )}
 

@@ -32,7 +32,7 @@ export function Footer() {
             </Link>
           </div>
           <p className="text-xs text-muted-foreground">
-            Live & backtest data · Live results delayed 1 hour
+            AI agent platform · Live & backtest data · Live results delayed 1 hour
           </p>
         </div>
       </div>

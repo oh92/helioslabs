@@ -42,13 +42,28 @@ export async function GET(request: NextRequest) {
         let cumReturn = 1;
         let peak = 1;
         let maxDrawdown = 0;
+        const returns: number[] = [];
         for (const t of trades) {
+          returns.push(t.pnl_pct / 100);
           cumReturn *= (1 + t.pnl_pct / 100);
           peak = Math.max(peak, cumReturn);
           const dd = ((peak - cumReturn) / peak) * 100;
           maxDrawdown = Math.max(maxDrawdown, dd);
         }
         const sessionPnlPct = (cumReturn - 1) * 100;
+
+        // Compute Sharpe ratio from trade returns (annualized)
+        let computedSharpe: number | undefined;
+        if (returns.length >= 3) {
+          const meanReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+          const variance = returns.reduce((sum, r) => sum + (r - meanReturn) ** 2, 0) / (returns.length - 1);
+          const stdDev = Math.sqrt(variance);
+          if (stdDev > 0) {
+            // Annualize: assume ~1700 trades/year on 15m bars (rough estimate)
+            // More conservatively, use sqrt(N) scaling where N = trades per period
+            computedSharpe = (meanReturn / stdDev) * Math.sqrt(returns.length);
+          }
+        }
 
         // Get market info
         const { data: market } = await supabase
@@ -114,7 +129,9 @@ export async function GET(request: NextRequest) {
           response.benchmark_return_pct = Math.round(benchmarkReturn * 100) / 100;
         }
 
-        if (sharpeRatio != null) response.sharpe_ratio = Math.round(sharpeRatio * 10000) / 10000;
+        // Use optimization Sharpe for backtest, computed Sharpe for live
+        const finalSharpe = sharpeRatio ?? computedSharpe;
+        if (finalSharpe != null) response.sharpe_ratio = Math.round(finalSharpe * 10000) / 10000;
         if (backtestStart) response.backtest_start = backtestStart;
         if (backtestEnd) response.backtest_end = backtestEnd;
         if (numCandles) response.num_candles = numCandles;

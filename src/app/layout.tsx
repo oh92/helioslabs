@@ -16,22 +16,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Helios | Algorithmic Trading System",
-  description: "AI-assisted algorithmic trading with rigorous backtesting, optimization, and live execution on dYdX perpetuals.",
-  keywords: ["algorithmic trading", "quantitative trading", "AI trading", "dYdX", "crypto trading", "backtesting"],
+  title: "Helios | AI Agent Platform for Autonomous Research & Monitoring",
+  description: "A three-layer AI agent platform — autonomous research agents, deterministic-first monitoring, and plugin strategy architecture — managing a live algorithmic trading system.",
+  keywords: ["AI agents", "autonomous research", "algorithmic trading", "LLM monitoring", "Claude AI", "agent architecture", "dYdX", "Hyperliquid"],
   authors: [{ name: "Owen Hobbs" }],
   metadataBase: new URL("https://helios.owen-hobbs.com"),
   openGraph: {
-    title: "Helios | Algorithmic Trading System",
-    description: "AI-assisted algorithmic trading with rigorous backtesting, optimization, and live execution.",
+    title: "Helios | AI Agent Platform for Autonomous Research & Monitoring",
+    description: "A three-layer AI agent platform with autonomous research, deterministic-first monitoring, and 93% LLM cost reduction.",
     type: "website",
     locale: "en_US",
     siteName: "Helios",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Helios | Algorithmic Trading System",
-    description: "AI-assisted algorithmic trading with rigorous backtesting, optimization, and live execution.",
+    title: "Helios | AI Agent Platform for Autonomous Research & Monitoring",
+    description: "A three-layer AI agent platform with autonomous research, deterministic-first monitoring, and 93% LLM cost reduction.",
   },
 };
 
