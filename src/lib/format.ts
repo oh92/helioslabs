@@ -14,6 +14,7 @@ export function formatReturn(pct: number, decimals = 1): string {
 
 export function formatTradeTime(iso: string): string {
   return new Date(iso).toLocaleString('en-US', {
+    year: '2-digit',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -22,7 +23,9 @@ export function formatTradeTime(iso: string): string {
 }
 
 export function formatExitReason(reason: string): string {
-  return reason.replace(/_/g, ' ');
+  // Strip trailing numeric thresholds (e.g., "primary_crosses_below_0.1" → "primary crosses below")
+  const cleaned = reason.replace(/_\d+(\.\d+)?$/, '');
+  return cleaned.replace(/_/g, ' ');
 }
 
 export function formatBalance(balance: number): string {

@@ -25,12 +25,11 @@ interface EquityCurveProps {
   className?: string;
 }
 
-// Format date as MM/DD
+// Format date as MMM 'YY (e.g., "Mar '24")
 function formatDate(timestamp: string): string {
   const date = new Date(timestamp);
-  return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(
-    date.getDate()
-  ).padStart(2, "0")}`;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[date.getMonth()]} '${String(date.getFullYear()).slice(2)}`;
 }
 
 // Format currency values for axis labels
