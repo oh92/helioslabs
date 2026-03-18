@@ -19,33 +19,40 @@ interface DailyPnLChartProps {
   height?: number;
 }
 
-function formatDate(timestamp: string): string {
+function formatDateShort(timestamp: string): string {
   const date = new Date(timestamp);
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${months[date.getMonth()]} '${String(date.getFullYear()).slice(2)}`;
 }
 
+function formatDateFull(timestamp: string): string {
+  const date = new Date(timestamp);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
 interface ChartEntry {
   date: string;
+  fullDate: string;
   pnl: number;
 }
 
-interface TooltipPayload {
-  payload: ChartEntry;
-}
-
-function PnLTooltip({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function renderTooltip(props: any) {
+  const { active, payload } = props;
   if (!active || !payload || !payload.length) return null;
-  const d = payload[0].payload;
+  const entry: ChartEntry = payload[0]?.payload;
+  if (!entry) return null;
   return (
     <div className="rounded border border-border bg-background px-3 py-2 shadow-sm">
-      <p className="text-xs text-muted-foreground">{d.date}</p>
-      <p className={`text-sm font-medium mt-1 ${d.pnl >= 0 ? "text-green-600" : "text-red-600"}`}>
-        {d.pnl >= 0 ? "+" : ""}{d.pnl.toFixed(2)}%
+      <p className="text-xs text-muted-foreground">{entry.fullDate}</p>
+      <p className={`text-sm font-medium mt-1 ${entry.pnl >= 0 ? "text-green-600" : "text-red-600"}`}>
+        {entry.pnl >= 0 ? "+" : ""}{entry.pnl.toFixed(2)}%
       </p>
     </div>
   );
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export function DailyPnLChart({ data, height = 250 }: DailyPnLChartProps) {
   const { tickStyle, axisLineStyle, cursorFill, gridStroke, profitColor, lossColor } = useChartStyles();
@@ -54,7 +61,8 @@ export function DailyPnLChart({ data, height = 250 }: DailyPnLChartProps) {
     return data
       .filter((d) => d.daily_pnl_pct !== undefined)
       .map((d) => ({
-        date: formatDate(d.timestamp),
+        date: formatDateShort(d.timestamp),
+        fullDate: formatDateFull(d.timestamp),
         pnl: d.daily_pnl_pct!,
       }));
   }, [data]);
@@ -66,13 +74,18 @@ export function DailyPnLChart({ data, height = 250 }: DailyPnLChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
           <XAxis
-            dataKey="date"
+            dataKey="fullDate"
             axisLine={axisLineStyle}
             tickLine={axisLineStyle}
             tick={tickStyle}
             tickMargin={8}
             interval="preserveStartEnd"
-            minTickGap={30}
+            minTickGap={40}
+            tickFormatter={(value: string) => {
+              const d = new Date(value);
+              const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              return `${months[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
+            }}
           />
           <YAxis
             axisLine={axisLineStyle}
@@ -82,7 +95,7 @@ export function DailyPnLChart({ data, height = 250 }: DailyPnLChartProps) {
             width={50}
           />
           <ReferenceLine y={0} stroke={gridStroke} />
-          <Tooltip content={<PnLTooltip />} cursor={{ fill: cursorFill }} />
+          <Tooltip content={renderTooltip} cursor={{ fill: cursorFill }} />
           <Bar dataKey="pnl" radius={[2, 2, 0, 0]}>
             {chartData.map((entry, i) => (
               <Cell key={i} fill={entry.pnl >= 0 ? profitColor : lossColor} />
