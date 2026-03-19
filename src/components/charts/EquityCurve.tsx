@@ -200,7 +200,7 @@ export function EquityCurve({
               />
             )}
 
-            <XAxis dataKey="formattedDate" hide />
+            <XAxis dataKey="timestamp" hide />
 
             <YAxis
               domain={[minBalance - balancePadding, maxBalance + balancePadding]}
@@ -268,13 +268,18 @@ export function EquityCurve({
               </defs>
 
               <XAxis
-                dataKey="formattedDate"
+                dataKey="timestamp"
                 axisLine={axisLineStyle}
                 tickLine={axisLineStyle}
                 tick={tickStyle}
                 tickMargin={8}
                 interval="preserveStartEnd"
                 minTickGap={40}
+                tickFormatter={(value: string) => {
+                  const d = new Date(value);
+                  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                  return `${months[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
+                }}
               />
 
               <YAxis
