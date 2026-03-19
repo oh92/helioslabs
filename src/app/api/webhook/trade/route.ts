@@ -2,12 +2,12 @@ import { createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminSupabase } from '@/lib/db';
 
-const SESSION_ID = 'sess_btc_live_001';
+const SESSION_ID = 'sess_live_proscore2_15m';
 const MARKET_ID = 'mkt_btc_001';
-const STARTING_BALANCE = 10000;
+const STARTING_BALANCE = 10000; // Normalized display balance — not real account size
 
 function deterministicId(entryTime: string, direction: string): string {
-  const raw = `${entryTime}:${direction}`;
+  const raw = `${entryTime}:${direction}:live`;
   return `trd_${createHash('sha256').update(raw).digest('hex').slice(0, 12)}`;
 }
 
@@ -56,7 +56,8 @@ export async function POST(request: NextRequest) {
     const direction = String(tradeData.type).trim();
     const tradeId = deterministicId(entryTime, direction);
 
-    // 1. Upsert the trade (strip sensitive fields — only store safe data)
+    // Upsert the trade — strip sensitive fields, only store safe data
+    // pnl_pct should be account-level (from trade_recorder.py) not price-level
     const trade = {
       id: tradeId,
       session_id: SESSION_ID,
@@ -65,8 +66,8 @@ export async function POST(request: NextRequest) {
       direction,
       entry_price: Number(tradeData.entry_price),
       exit_price: Number(tradeData.exit_price),
-      size: null,
-      pnl: null,
+      size: null,       // Never store — reveals account size
+      pnl: null,        // Never store — reveals account size
       pnl_pct: Math.round(Number(tradeData.pnl_pct) * 10000) / 10000,
       exit_reason: String(tradeData.exit_reason).trim(),
       source: 'live',
@@ -79,14 +80,14 @@ export async function POST(request: NextRequest) {
     if (tradeError) {
       console.error('[Webhook] Trade upsert error:', tradeError);
       return NextResponse.json(
-        { error: 'Failed to store trade', detail: tradeError.message },
+        { error: 'Failed to store trade' },
         { status: 500 }
       );
     }
 
-    console.log(`[Webhook] Upserted trade ${tradeId}: ${direction} ${trade.entry_price} -> ${trade.exit_price} (${trade.pnl_pct}%)`);
+    console.log(`[Webhook] Trade ${tradeId}: ${direction} (${trade.pnl_pct}%)`);
 
-    // 2. Rebuild daily snapshots from all live trades
+    // Rebuild daily snapshots from all live trades
     const { data: allTrades, error: fetchError } = await adminSupabase
       .from('trades')
       .select('exit_time, pnl_pct')
@@ -94,9 +95,9 @@ export async function POST(request: NextRequest) {
       .order('exit_time', { ascending: true });
 
     if (fetchError) {
-      console.error('[Webhook] Failed to fetch trades for snapshots:', fetchError);
+      console.error('[Webhook] Snapshot rebuild failed:', fetchError);
       return NextResponse.json(
-        { error: 'Trade stored but snapshot rebuild failed', detail: fetchError.message },
+        { error: 'Trade stored but snapshot rebuild failed' },
         { status: 500 }
       );
     }
@@ -109,28 +110,51 @@ export async function POST(request: NextRequest) {
       tradesByDate[exitDate].push(Number(t.pnl_pct));
     }
 
-    // Find date range: session start through latest trade exit
-    const sessionStartDate = '2026-02-11';
+    // Date range from first trade to latest
     const sortedDates = Object.keys(tradesByDate).sort();
-    const lastTradeDate = sortedDates[sortedDates.length - 1] || sessionStartDate;
+    if (sortedDates.length === 0) {
+      return NextResponse.json({ success: true, trade_id: tradeId });
+    }
 
-    // Build snapshots for every day in range
+    const firstDate = new Date(sortedDates[0] + 'T00:00:00Z');
+    const lastDate = new Date(sortedDates[sortedDates.length - 1] + 'T00:00:00Z');
+
+    // Day before first trade as starting snapshot
+    const dayZero = new Date(firstDate);
+    dayZero.setUTCDate(dayZero.getUTCDate() - 1);
+
+    // Build snapshots using normalized display balance
     const snapshots: Array<Record<string, unknown>> = [];
     let balance = STARTING_BALANCE;
-    const current = new Date(sessionStartDate + 'T00:00:00Z');
-    const end = new Date(lastTradeDate + 'T00:00:00Z');
 
-    while (current <= end) {
+    // Day-zero snapshot
+    const dayZeroStr = dayZero.toISOString().slice(0, 10);
+    snapshots.push({
+      id: `snap_live_${dayZeroStr.replace(/-/g, '')}`,
+      market_id: MARKET_ID,
+      date: dayZeroStr,
+      open_balance: STARTING_BALANCE,
+      close_balance: STARTING_BALANCE,
+      daily_pnl: 0,
+      daily_pnl_pct: 0,
+      num_trades: 0,
+      source: 'live',
+    });
+
+    const current = new Date(firstDate);
+    while (current <= lastDate) {
       const dateStr = current.toISOString().slice(0, 10);
       const dayPnls = tradesByDate[dateStr] || [];
 
       const openBalance = balance;
-      const dailyPnlPct = dayPnls.reduce((sum, p) => sum + p, 0);
-      balance = openBalance * (1 + dailyPnlPct / 100);
+      for (const p of dayPnls) {
+        balance *= (1 + p / 100);
+      }
       const dailyPnl = balance - openBalance;
+      const dailyPnlPct = openBalance > 0 ? (dailyPnl / openBalance) * 100 : 0;
 
       snapshots.push({
-        id: `snap_${dateStr.replace(/-/g, '')}`,
+        id: `snap_live_${dateStr.replace(/-/g, '')}`,
         market_id: MARKET_ID,
         date: dateStr,
         open_balance: Math.round(openBalance * 100) / 100,
@@ -144,15 +168,11 @@ export async function POST(request: NextRequest) {
       current.setUTCDate(current.getUTCDate() + 1);
     }
 
-    // Delete existing live snapshots and insert fresh ones
-    const { error: deleteError } = await adminSupabase
+    // Replace all live snapshots
+    await adminSupabase
       .from('daily_snapshots')
       .delete()
       .eq('source', 'live');
-
-    if (deleteError) {
-      console.error('[Webhook] Snapshot delete error:', deleteError);
-    }
 
     if (snapshots.length > 0) {
       const { error: snapError } = await adminSupabase
@@ -161,19 +181,13 @@ export async function POST(request: NextRequest) {
 
       if (snapError) {
         console.error('[Webhook] Snapshot insert error:', snapError);
-        return NextResponse.json(
-          { error: 'Trade stored but snapshot insert failed', detail: snapError.message },
-          { status: 500 }
-        );
       }
     }
 
-    console.log(`[Webhook] Rebuilt ${snapshots.length} daily snapshots. Balance: $${balance.toFixed(2)}`);
-
+    // Response — no balance or sensitive data
     return NextResponse.json({
       success: true,
       trade_id: tradeId,
-      balance: Math.round(balance * 100) / 100,
     });
   } catch (error) {
     console.error('[Webhook] Unexpected error:', error);
