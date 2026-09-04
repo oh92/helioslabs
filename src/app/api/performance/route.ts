@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/db';
 import { mockPerformance } from '@/lib/mock-data';
+import { toStrategyKey, STRATEGY_META } from '@/lib/strategy';
+
+// Honest empty state for a live strategy with no (visible) trades yet — better
+// than falling back to mock data on a real, public strategy tab.
+function emptyLivePerformance(strategy: ReturnType<typeof toStrategyKey>) {
+  const meta = strategy ? STRATEGY_META[strategy] : null;
+  return {
+    market: { id: 'mkt_btc_001', symbol: meta?.market || 'BTC-USD', interval: '15m', is_active: true },
+    current_position: 'FLAT',
+    session_pnl: 0,
+    session_pnl_pct: 0,
+    total_trades: 0,
+    win_rate: 0,
+    max_drawdown_pct: 0,
+    avg_win_pct: 0,
+    avg_loss_pct: 0,
+  };
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const source = searchParams.get('source') || 'backtest';
+  const strategy = toStrategyKey(searchParams.get('strategy'));
 
   if (supabase) {
     try {
@@ -19,6 +38,8 @@ export async function GET(request: NextRequest) {
       if (source === 'live') {
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
         query = query.lt('exit_time', oneHourAgo);
+        // Split live metrics by strategy (funding vs volume)
+        if (strategy) query = query.eq('strategy_name', strategy);
       }
 
       const { data: trades, error } = await query;
@@ -138,11 +159,14 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json(response);
       }
+      // Live is real or empty — never show mock metrics for a real strategy tab
+      if (source === 'live') return NextResponse.json(emptyLivePerformance(strategy));
     } catch (e) {
       console.error('Error computing performance from Supabase:', e);
+      if (source === 'live') return NextResponse.json(emptyLivePerformance(strategy));
     }
   }
 
-  // Fallback to mock data
+  // Fallback to mock data (backtest / Supabase unconfigured)
   return NextResponse.json(mockPerformance);
 }
