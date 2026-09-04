@@ -12,9 +12,11 @@ import { DistributionBars } from '@/components/charts/DistributionBars';
 import { SectionHeading } from '@/components/display/SectionHeading';
 import { MetricCard } from '@/components/display/MetricCard';
 import { ViewToggle } from '@/components/display/ViewToggle';
+import { StrategyTabs } from '@/components/display/StrategyTabs';
 import { SystemStatus } from '@/components/display/SystemStatus';
 import { MarketCard } from '@/components/display/MarketCard';
 import { formatPrice, formatPnlPct, formatTradeTime, formatExitReason, formatBalance } from '@/lib/format';
+import { STRATEGY_META, toStrategyKey, type StrategyKey } from '@/lib/strategy';
 import type { Trade, EquityDataPoint, MarketPerformance, OptimizationRun, OptimizationDistributions, SystemHealth } from '@/lib/types';
 
 type ViewMode = 'backtest' | 'live';
@@ -31,8 +33,10 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialView = (searchParams.get('view') as ViewMode) || 'backtest';
+  const initialStrategy = toStrategyKey(searchParams.get('strategy')) || 'funding';
 
   const [view, setView] = useState<ViewMode>(initialView);
+  const [strategy, setStrategy] = useState<StrategyKey>(initialStrategy);
   const [trades, setTrades] = useState<Trade[] | null>(null);
   const [allTrades, setAllTrades] = useState<Trade[] | null>(null);
   const [equityData, setEquityData] = useState<EquityDataPoint[] | null>(null);
@@ -42,14 +46,16 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [showBenchmark, setShowBenchmark] = useState(true);
 
-  const fetchData = useCallback(async (source: ViewMode) => {
+  const fetchData = useCallback(async (source: ViewMode, strat: StrategyKey) => {
     setLoading(true);
+    // Live data is split per strategy; backtest is a single study.
+    const stratParam = source === 'live' ? `&strategy=${strat}` : '';
     try {
       const fetches = [
-        fetch(`/api/trades?limit=10&source=${source}`),
-        fetch(`/api/equity?source=${source}`),
-        fetch(`/api/performance?source=${source}`),
-        fetch(`/api/trades?limit=500&source=${source}`),
+        fetch(`/api/trades?limit=10&source=${source}${stratParam}`),
+        fetch(`/api/equity?source=${source}${stratParam}`),
+        fetch(`/api/performance?source=${source}${stratParam}`),
+        fetch(`/api/trades?limit=500&source=${source}${stratParam}`),
         fetch('/api/health'),
       ];
 
@@ -72,12 +78,20 @@ function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    fetchData(view).catch(() => {});
-  }, [view, fetchData]);
+    fetchData(view, strategy).catch(() => {});
+  }, [view, strategy, fetchData]);
+
+  const buildUrl = (v: ViewMode, s: StrategyKey) =>
+    v === 'live' ? `/dashboard?view=live&strategy=${s}` : `/dashboard?view=backtest`;
 
   const switchView = (newView: ViewMode) => {
     setView(newView);
-    router.replace(`/dashboard?view=${newView}`, { scroll: false });
+    router.replace(buildUrl(newView, strategy), { scroll: false });
+  };
+
+  const switchStrategy = (newStrategy: StrategyKey) => {
+    setStrategy(newStrategy);
+    router.replace(buildUrl('live', newStrategy), { scroll: false });
   };
 
   const totalPnlPct = equityData && equityData.length >= 2
@@ -118,6 +132,16 @@ function DashboardContent() {
             labels={{ backtest: 'Backtest Results', live: 'Live Trading' }}
             className="w-fit"
           />
+
+          {/* Live strategy sub-tabs — funding (dYdX BTC) vs volume (Hyperliquid HYPE) */}
+          {view === 'live' && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <StrategyTabs strategy={strategy} onStrategyChange={switchStrategy} />
+              <span className="text-xs text-muted-foreground">
+                {STRATEGY_META[strategy].tagline} · {STRATEGY_META[strategy].venue} · {STRATEGY_META[strategy].market}
+              </span>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -182,7 +206,7 @@ function DashboardContent() {
               </SectionHeading>
               <div className="grid gap-6 md:grid-cols-2">
                 <MarketCard
-                  symbol="BTC-USD"
+                  symbol={view === 'live' ? STRATEGY_META[strategy].market : 'BTC-USD'}
                   position={view === 'live' ? (performance?.current_position || 'FLAT') : 'FLAT'}
                   sessionPnlPct={performance?.session_pnl_pct || totalPnlPct}
                   totalTrades={performance?.total_trades || 0}
@@ -205,7 +229,7 @@ function DashboardContent() {
                           : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 bg-muted/20 hover:bg-muted/30'
                       }`}
                     >
-                      BTC buy-and-hold
+                      {view === 'live' ? STRATEGY_META[strategy].market.replace('-USD', '') : 'BTC'} buy-and-hold
                     </button>
                   )}
                 </div>

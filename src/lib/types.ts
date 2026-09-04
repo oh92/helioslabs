@@ -31,6 +31,7 @@ export interface Trade {
   exit_reason: string;
   created_at: string;
   source?: 'backtest' | 'live';
+  strategy_name?: string | null; // 'funding' | 'volume' for live trades; null for backtest
 }
 
 export interface OptimizationRun {
@@ -59,6 +60,7 @@ export interface DailySnapshot {
   daily_pnl: number;
   daily_pnl_pct: number;
   num_trades: number;
+  strategy_name?: string | null;
 }
 
 // API response types
